@@ -171,7 +171,15 @@ class BigQuery(BaseQueryRunner):
         return _get_total_bytes_processed_for_resp(response)
 
     def _get_job_data(self, query):
-        job_data = {"configuration": {"query": {"query": query}}}
+        job_data = {
+            "configuration": {
+                "query": {"query": query},
+                "labels": {
+                    "all": "bigquery-job-redash",
+                    "bigquery-job": "redash",
+                }
+            }
+        }
 
         if self._get_location():
             job_data["jobReference"] = {"location": self._get_location()}
