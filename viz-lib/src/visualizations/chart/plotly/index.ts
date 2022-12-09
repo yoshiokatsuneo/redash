@@ -1,5 +1,7 @@
 import Plotly from "plotly.js/lib/core";
 // @ts-expect-error ts-migrate(7016) FIXME: Could not find a declaration file for module 'plot... Remove this comment to see the full error message
+import locale from 'plotly.js-locales/ja'
+// @ts-expect-error ts-migrate(7016) FIXME: Could not find a declaration file for module 'plot... Remove this comment to see the full error message
 import bar from "plotly.js/lib/bar";
 // @ts-expect-error ts-migrate(7016) FIXME: Could not find a declaration file for module 'plot... Remove this comment to see the full error message
 import pie from "plotly.js/lib/pie";
@@ -18,10 +20,11 @@ import updateChartSize from "./updateChartSize";
 import { prepareCustomChartData, createCustomChartRenderer } from "./customChartUtils";
 
 // @ts-expect-error ts-migrate(2339) FIXME: Property 'register' does not exist on type 'typeof... Remove this comment to see the full error message
-Plotly.register([bar, pie, histogram, box, heatmap]);
+Plotly.register([bar, pie, histogram, box, heatmap, locale]);
 // @ts-expect-error ts-migrate(2339) FIXME: Property 'setPlotConfig' does not exist on type 't... Remove this comment to see the full error message
 Plotly.setPlotConfig({
   modeBarButtonsToRemove: ["sendDataToCloud"],
+  locale: 'ja',
 });
 
 export {
