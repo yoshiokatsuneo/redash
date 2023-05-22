@@ -298,7 +298,7 @@ class BigQuery(BaseQueryRunner):
         datasets = self._get_project_datasets(project_id)
 
         query_base = """
-        SELECT table_schema, table_name, column_name
+        SELECT table_schema, table_name, column_name, data_type
         FROM `{dataset_id}`.INFORMATION_SCHEMA.COLUMNS
         WHERE table_schema NOT IN ('information_schema')
         """
@@ -320,7 +320,7 @@ class BigQuery(BaseQueryRunner):
             table_name = "{0}.{1}".format(row["table_schema"], row["table_name"])
             if table_name not in schema:
                 schema[table_name] = {"name": table_name, "columns": []}
-            schema[table_name]["columns"].append(row["column_name"])
+            schema[table_name]["columns"].append({"name": row["column_name"], "type": row["data_type"]})
 
         return list(schema.values())
 
