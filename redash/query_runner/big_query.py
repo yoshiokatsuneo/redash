@@ -334,6 +334,7 @@ class BigQuery(BaseQueryRunner):
         jobs = bigquery_service.jobs()
 
         try:
+            '''
             if "totalMBytesProcessedLimit" in self.configuration:
                 limitMB = self.configuration["totalMBytesProcessedLimit"]
                 processedMB = (
@@ -345,6 +346,7 @@ class BigQuery(BaseQueryRunner):
                         "Larger than %d MBytes will be processed (%f MBytes)"
                         % (limitMB, processedMB),
                     )
+            '''
 
             data = self._get_query_result(jobs, query)
             error = None
