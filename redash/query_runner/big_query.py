@@ -200,6 +200,9 @@ class BigQuery(BaseQueryRunner):
                 "maximumBillingTier"
             ] = self.configuration["maximumBillingTier"]
 
+        if "totalMBytesProcessedLimit" in self.configuration:
+            job_data["configuration"]["query"]["maximumBytesBilled"] = self.configuration["totalMBytesProcessedLimit"] * 1000 * 1000
+
         return job_data
 
     def _get_query_result(self, jobs, query):

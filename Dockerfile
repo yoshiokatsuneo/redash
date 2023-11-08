@@ -25,7 +25,7 @@ COPY --chown=redash client /frontend/client
 COPY --chown=redash webpack.config.js /frontend/
 RUN if [ "x$skip_frontend_build" = "x" ] ; then yarn build; else mkdir -p /frontend/client/dist && touch /frontend/client/dist/multi_org.html && touch /frontend/client/dist/index.html; fi
 
-FROM python:3.7-slim-buster
+FROM python:3.9-slim-buster
 
 EXPOSE 5000
 
@@ -46,6 +46,7 @@ RUN apt-get update && \
   libffi-dev \
   sudo \
   git-core \
+  libkrb5-dev \
   # Postgres client
   libpq-dev \
   # ODBC support:
@@ -88,6 +89,8 @@ ENV PIP_NO_CACHE_DIR=1
 
 # rollback pip version to avoid legacy resolver problem
 RUN pip install pip==20.2.4;
+
+RUN pip install --upgrade setuptools
 
 # We first copy only the requirements file, to avoid rebuilding on every file change.
 COPY requirements_all_ds.txt ./
