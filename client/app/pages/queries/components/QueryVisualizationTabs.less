@@ -1,4 +1,25 @@
 .query-visualization-tabs {
+  .drag-handle {
+    cursor: move;
+    opacity: 0.5;
+    margin-right: 5px;
+    
+    &:hover {
+      opacity: 1;
+    }
+    
+    &:before {
+      content: "⋮⋮";
+      font-size: 14px;
+    }
+  }
+  
+  .dragging-tab {
+    z-index: 100;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
   .query-results-empty-state {
     height: 100%;
     display: flex;

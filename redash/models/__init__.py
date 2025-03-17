@@ -1196,6 +1196,7 @@ class Visualization(TimestampMixin, BelongsToOrgMixin, db.Model):
     # query_rel and not query, because db.Model already has query defined.
     query_rel = db.relationship(Query, back_populates="visualizations")
     name = Column(db.String(255))
+    position = Column(db.Integer, default=0)  # Add position column with default value 0
     description = Column(db.String(4096), nullable=True)
     options = Column(MutableDict.as_mutable(JSONB), nullable=True)
 

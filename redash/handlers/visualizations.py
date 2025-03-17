@@ -23,6 +23,24 @@ class VisualizationListResource(BaseResource):
         models.db.session.add(vis)
         models.db.session.commit()
         return serialize_visualization(vis, with_query=False)
+        
+    @require_permission("edit_query")
+    def put(self):
+        """Update positions of multiple visualizations"""
+        visualizations_data = request.get_json(force=True)
+        
+        for viz_data in visualizations_data:
+            visualization_id = viz_data.get('id')
+            position = viz_data.get('position')
+            
+            if visualization_id and position is not None:
+                vis = models.Visualization.get_by_id_and_org(visualization_id, self.current_org)
+                require_object_modify_permission(vis.query_rel, self.current_user)
+                vis.position = position
+                models.db.session.add(vis)
+        
+        models.db.session.commit()
+        return {"success": True}
 
 
 class VisualizationResource(BaseResource):
