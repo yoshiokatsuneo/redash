@@ -8,6 +8,8 @@ import Button from "antd/lib/button";
 import Modal from "antd/lib/modal";
 import VisualizationRenderer from "@/components/visualizations/VisualizationRenderer";
 import PlainButton from "@/components/PlainButton";
+import { SortableContainer, SortableElement, DragHandle } from "@redash/viz/lib/components/sortable";
+import Visualization from "@/services/visualization";
 
 import "./QueryVisualizationTabs.less";
 
@@ -38,7 +40,7 @@ EmptyState.defaultProps = {
   refreshButton: null,
 };
 
-function TabWithDeleteButton({ visualizationName, canDelete, onDelete, ...props }) {
+function TabWithDeleteButton({ visualizationName, canDelete, onDelete, showDragHandle, ...props }) {
   const handleDelete = useCallback(
     (e) => {
       e.stopPropagation();
@@ -57,6 +59,7 @@ function TabWithDeleteButton({ visualizationName, canDelete, onDelete, ...props 
 
   return (
     <span {...props}>
+      {showDragHandle && <DragHandle className="drag-handle" />}
       {visualizationName}
       {canDelete && (
         <PlainButton className="delete-visualization-button" onClick={handleDelete} aria-label="Close" title="Close">
@@ -71,8 +74,9 @@ TabWithDeleteButton.propTypes = {
   visualizationName: PropTypes.string.isRequired,
   canDelete: PropTypes.bool,
   onDelete: PropTypes.func,
+  showDragHandle: PropTypes.bool,
 };
-TabWithDeleteButton.defaultProps = { canDelete: false, onDelete: () => {} };
+TabWithDeleteButton.defaultProps = { canDelete: false, onDelete: () => {}, showDragHandle: false };
 
 const defaultVisualizations = [
   {
@@ -119,14 +123,41 @@ export default function QueryVisualizationTabs({
     );
   }
 
-  const orderedVisualizations = useMemo(() => orderBy(visualizations, ["id"]), [visualizations]);
+  const orderedVisualizations = useMemo(() => orderBy(visualizations, ["position", "id"]), [visualizations]);
   const isFirstVisualization = useCallback((visId) => visId === orderedVisualizations[0].id, [orderedVisualizations]);
   const isMobile = useMedia({ maxWidth: 768 });
+  
+  const SortableTabPane = SortableElement(({ children, ...props }) => (
+    <TabPane {...props}>{children}</TabPane>
+  ));
+  
+  function handleSortEnd({ oldIndex, newIndex }) {
+    if (oldIndex === newIndex) return;
+    
+    const reorderedVisualizations = [...orderedVisualizations];
+    const [movedItem] = reorderedVisualizations.splice(oldIndex, 1);
+    reorderedVisualizations.splice(newIndex, 0, movedItem);
+    
+    // Update positions
+    const updatedVisualizations = reorderedVisualizations.map((vis, index) => ({
+      id: vis.id,
+      position: index,
+    }));
+    
+    // Save new positions to the server
+    Visualization.updatePositions(updatedVisualizations).catch(() => {
+      // Handle error if needed
+      console.error("Failed to update visualization positions");
+    });
+  }
 
   const [filters, setFilters] = useState([]);
+  
+  const SortableTabs = SortableContainer(Tabs);
+  const canReorder = !isMobile && canDeleteVisualizations;
 
   return (
-    <Tabs
+    <SortableTabs
       {...tabsProps}
       type="card"
       className={cx("query-visualization-tabs card-style")}
@@ -135,9 +166,15 @@ export default function QueryVisualizationTabs({
       tabBarGutter={0}
       onChange={(activeKey) => onChangeTab(+activeKey)}
       destroyInactiveTabPane
+      useDragHandle
+      axis="x"
+      lockAxis="x"
+      onSortEnd={handleSortEnd}
+      helperClass="dragging-tab"
+      distance={5}
     >
-      {orderedVisualizations.map((visualization) => (
-        <TabPane
+      {orderedVisualizations.map((visualization, index) => (
+        <SortableTabPane
           key={`${visualization.id}`}
           tab={
             <TabWithDeleteButton
@@ -145,8 +182,10 @@ export default function QueryVisualizationTabs({
               canDelete={!isMobile && canDeleteVisualizations && !isFirstVisualization(visualization.id)}
               visualizationName={visualization.name}
               onDelete={() => onDeleteVisualization(visualization.id)}
+              showDragHandle={canReorder && !isFirstVisualization(visualization.id)}
             />
           }
+          index={index}
         >
           {queryResult ? (
             <VisualizationRenderer
@@ -167,9 +206,9 @@ export default function QueryVisualizationTabs({
               refreshButton={refreshButton}
             />
           )}
-        </TabPane>
+        </SortableTabPane>
       ))}
-    </Tabs>
+    </SortableTabs>
   );
 }
 
