@@ -466,7 +466,11 @@ class Query(ChangeTrackingMixin, TimestampMixin, BelongsToOrgMixin, db.Model):
     schedule = Column(MutableDict.as_mutable(JSONB), nullable=True)
     interval = json_cast_property(db.Integer, "schedule", "interval", default=0)
     schedule_failures = Column(db.Integer, default=0)
-    visualizations = db.relationship("Visualization", cascade="all, delete-orphan")
+    visualizations = db.relationship(
+        "Visualization",
+        cascade="all, delete-orphan",
+        order_by="(Visualization.order, Visualization.id)",
+    )
     options = Column(MutableDict.as_mutable(JSONB), default={})
     search_vector = Column(
         TSVectorType(
@@ -810,7 +814,7 @@ class Query(ChangeTrackingMixin, TimestampMixin, BelongsToOrgMixin, db.Model):
         # Query.create will add default TABLE visualization, so use constructor to create bare copy of query
         forked_query = Query(name="Copy of (#{}) {}".format(self.id, self.name), user=user, **kwargs)
 
-        for v in sorted(self.visualizations, key=lambda v: v.id):
+        for v in sorted(self.visualizations, key=lambda v: (v.order, v.id)):
             forked_v = v.copy()
             forked_v["query_rel"] = forked_query
             fv = Visualization(**forked_v)  # it will magically add it to `forked_query.visualizations`
@@ -1247,6 +1251,9 @@ class Visualization(TimestampMixin, BelongsToOrgMixin, db.Model):
     name = Column(db.String(255))
     description = Column(db.String(4096), nullable=True)
     options = Column(MutableDict.as_mutable(JSONB), nullable=True)
+    # Position of the visualization tab within its query. Visualizations created before this
+    # column was introduced all share the default value, and fall back to being ordered by id.
+    order = Column(db.Integer, nullable=False, server_default="0", default=0)
 
     __tablename__ = "visualizations"
 
@@ -1263,6 +1270,7 @@ class Visualization(TimestampMixin, BelongsToOrgMixin, db.Model):
             "name": self.name,
             "description": self.description,
             "options": self.options,
+            "order": self.order,
         }
 
 

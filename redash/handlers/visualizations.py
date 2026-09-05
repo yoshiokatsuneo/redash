@@ -1,4 +1,5 @@
 from flask import request
+from flask_restful import abort
 
 from redash import models
 from redash.handlers.base import BaseResource, get_object_or_404
@@ -7,6 +8,12 @@ from redash.permissions import (
     require_permission,
 )
 from redash.serializers import serialize_visualization
+
+
+def next_visualization_order(query):
+    """Order value that puts a new visualization after the existing ones."""
+    orders = [vis.order for vis in query.visualizations]
+    return max(orders) + 1 if orders else 0
 
 
 class VisualizationListResource(BaseResource):
@@ -18,6 +25,7 @@ class VisualizationListResource(BaseResource):
         require_object_modify_permission(query, self.current_user)
 
         kwargs["query_rel"] = query
+        kwargs.setdefault("order", next_visualization_order(query))
 
         vis = models.Visualization(**kwargs)
         models.db.session.add(vis)
@@ -54,3 +62,43 @@ class VisualizationResource(BaseResource):
         )
         models.db.session.delete(vis)
         models.db.session.commit()
+
+
+class QueryVisualizationsReorderResource(BaseResource):
+    @require_permission("edit_query")
+    def post(self, query_id):
+        """Reorder the visualization tabs of a query.
+
+        Expects `{"ids": [...]}` listing every visualization of the query exactly once,
+        in the order they should be displayed.
+        """
+        query = get_object_or_404(models.Query.get_by_id_and_org, query_id, self.current_org)
+        require_object_modify_permission(query, self.current_user)
+
+        ids = request.get_json(force=True).get("ids")
+        if not isinstance(ids, list) or any(isinstance(visualization_id, (list, dict)) for visualization_id in ids):
+            abort(400, message="Expected 'ids' to be a list of visualization ids.")
+
+        visualizations = {vis.id: vis for vis in query.visualizations}
+        if len(ids) != len(visualizations) or set(ids) != set(visualizations):
+            abort(
+                400,
+                message="'ids' must contain every visualization of the query exactly once.",
+            )
+
+        for order, visualization_id in enumerate(ids):
+            visualizations[visualization_id].order = order
+
+        models.db.session.commit()
+
+        self.record_event(
+            {
+                "action": "reorder_visualizations",
+                "object_id": query_id,
+                "object_type": "query",
+            }
+        )
+
+        return [
+            serialize_visualization(visualizations[visualization_id], with_query=False) for visualization_id in ids
+        ]

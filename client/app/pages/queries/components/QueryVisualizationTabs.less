@@ -74,6 +74,12 @@
     }
   }
 
+  &.query-visualization-tabs-reorderable .ant-tabs-tab {
+    cursor: move;
+    // dragging a tab must not select the label of the tabs it travels over
+    user-select: none;
+  }
+
   .add-visualization-button {
     span {
       color: #767676;
@@ -106,6 +112,24 @@
 // hide delete button when it in the dropdown
 .ant-tabs-dropdown-menu-item .delete-visualization-button {
   display: none;
+}
+
+// The tab that follows the cursor while reordering is a clone appended to `body`, so it
+// cannot rely on any of the styles scoped to `.query-visualization-tabs`. The class is
+// paired with `.ant-tabs-tab` to win over antd's own (equally specific) tab styles.
+.ant-tabs-tab.query-visualization-tab-dragging {
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-top: 2px solid #2196f3;
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: move;
+  user-select: none;
+  z-index: 1050;
+
+  .delete-visualization-button {
+    display: none;
+  }
 }
 
 .query-fixed-layout .query-visualization-tabs .visualization-renderer {
