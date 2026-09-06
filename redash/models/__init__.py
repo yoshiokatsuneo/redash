@@ -466,6 +466,7 @@ class Query(ChangeTrackingMixin, TimestampMixin, BelongsToOrgMixin, db.Model):
     schedule = Column(MutableDict.as_mutable(JSONB), nullable=True)
     interval = json_cast_property(db.Integer, "schedule", "interval", default=0)
     schedule_failures = Column(db.Integer, default=0)
+    # Visualizations predating the position column all default to 0, so id keeps them ordered.
     visualizations = db.relationship(
         "Visualization",
         cascade="all, delete-orphan",
@@ -1251,8 +1252,6 @@ class Visualization(TimestampMixin, BelongsToOrgMixin, db.Model):
     name = Column(db.String(255))
     description = Column(db.String(4096), nullable=True)
     options = Column(MutableDict.as_mutable(JSONB), nullable=True)
-    # Position of the visualization tab within its query. Visualizations created before this
-    # column was introduced all share the default value, and fall back to being ordered by id.
     position = Column(db.Integer, nullable=False, server_default="0", default=0)
 
     __tablename__ = "visualizations"
