@@ -134,6 +134,8 @@ export default function QueryVisualizationTabs({
         return;
       }
       const visualizationIds = orderedVisualizations.map((visualization) => visualization.id);
+      // Move the dragged id into its new slot: the inner splice takes it out, the outer one puts
+      // it back. Taking it out first is what makes `newIndex` a position in the resulting order.
       visualizationIds.splice(newIndex, 0, visualizationIds.splice(oldIndex, 1)[0]);
       onReorderVisualizations(visualizationIds);
     },
