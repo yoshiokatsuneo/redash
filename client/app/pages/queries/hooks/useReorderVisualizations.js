@@ -15,8 +15,6 @@ export default function useReorderVisualizations(query, onChange) {
       }));
 
       // Move the tabs right away, and roll back if the server rejects the new order.
-      // Object.assign rather than a spread: the clone is a Query instance, and its methods
-      // only survive on a target that keeps the prototype.
       handleChange(Object.assign(query.clone(), { visualizations: reorderedVisualizations }));
 
       return Visualization.reorder({ queryId: query.id, ids: orderedVisualizationIds }).catch(() => {
