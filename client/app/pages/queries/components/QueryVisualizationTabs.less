@@ -118,6 +118,11 @@
 // cannot rely on any of the styles scoped to `.query-visualization-tabs`. The class is
 // paired with `.ant-tabs-tab` to win over antd's own (equally specific) tab styles.
 .ant-tabs-tab.query-visualization-tab-dragging {
+  // antd's card-tab padding (`.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab`) only applies
+  // while the tab is inside its `.ant-tabs-card` ancestor. The dragged clone is appended to
+  // `body`, breaking that ancestor chain, so without this the label falls back to the base
+  // `.ant-tabs-tab` padding (vertical only) and sticks to the left edge of the fixed-width clone.
+  padding: 8px 16px;
   background: white;
   border: 1px solid #d9d9d9;
   border-top: 2px solid #2196f3;
@@ -128,7 +133,7 @@
   z-index: 1050;
 
   .delete-visualization-button {
-    display: none;
+    visibility: hidden;
   }
 }
 
