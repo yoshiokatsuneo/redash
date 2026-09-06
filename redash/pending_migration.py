@@ -6,12 +6,19 @@ from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from flask import render_template, request
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
 # Don't hit the database on every single request while migrations are pending;
 # an admin running them will take at least a few seconds anyway.
 RECHECK_INTERVAL_SECONDS = 5
+
+# A migration's DDL can briefly hold a lock covering the alembic_version table
+# (it's updated as the last step of each migration). Bound how long we'll wait
+# for it so a slow migration can't pile up stuck workers -- if we can't get an
+# answer quickly, the caller's fail-open handling takes over.
+STATEMENT_TIMEOUT_MS = 2000
 
 # Requests that must keep working even while migrations are pending: health
 # checks used by orchestrators, and the static assets the error page itself needs.
@@ -26,7 +33,13 @@ def get_head_revision():
 
 def get_current_revision(db):
     with db.engine.connect() as connection:
-        return MigrationContext.configure(connection).get_current_revision()
+        # `SET LOCAL` only reverts automatically at the end of a transaction. An
+        # explicit `begin()` guarantees that boundary, so the timeout can't leak
+        # onto whatever unrelated query reuses this connection once it's back in
+        # the pool (a plain `SET`, without a bounded transaction, would).
+        with connection.begin():
+            connection.execute(text("SET LOCAL statement_timeout = :timeout"), {"timeout": STATEMENT_TIMEOUT_MS})
+            return MigrationContext.configure(connection).get_current_revision()
 
 
 def is_database_up_to_date(db):
