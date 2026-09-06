@@ -1,0 +1,92 @@
+import logging
+import os
+import time
+
+from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
+from flask import render_template, request
+
+logger = logging.getLogger(__name__)
+
+# Don't hit the database on every single request while migrations are pending;
+# an admin running them will take at least a few seconds anyway.
+RECHECK_INTERVAL_SECONDS = 5
+
+# Requests that must keep working even while migrations are pending: health
+# checks used by orchestrators, and the static assets the error page itself needs.
+EXEMPT_PATH_PREFIXES = ("/ping", "/static/")
+
+
+def get_head_revision():
+    config = Config(os.path.join("migrations", "alembic.ini"))
+    config.set_main_option("script_location", "migrations")
+    return ScriptDirectory.from_config(config).get_current_head()
+
+
+def get_current_revision(db):
+    with db.engine.connect() as connection:
+        return MigrationContext.configure(connection).get_current_revision()
+
+
+def is_database_up_to_date(db):
+    return get_current_revision(db) == get_head_revision()
+
+
+class PendingMigrationCheck:
+    """
+    Blocks requests with a clear message while the database is behind the code's
+    migrations, instead of letting routes fail with a raw "column/table does not
+    exist" error that looks like an unrelated bug.
+    """
+
+    def __init__(self):
+        self._up_to_date = False
+        self._last_checked_at = 0.0
+
+    def init_app(self, app, db):
+        @app.before_request
+        def check_pending_migrations():
+            return self._check(app, db)
+
+    def _check(self, app, db):
+        if app.testing:
+            # Tests build the schema from the current models (db.create_all()) and
+            # never stamp an alembic revision, so this check would always fail.
+            # `app.testing` is read here (not in init_app) because tests only flip
+            # it on after create_app() has already registered this hook.
+            return None
+
+        if self._up_to_date or request.path.startswith(EXEMPT_PATH_PREFIXES):
+            return None
+
+        now = time.monotonic()
+        if now - self._last_checked_at < RECHECK_INTERVAL_SECONDS:
+            return self._pending_response()
+        self._last_checked_at = now
+
+        try:
+            self._up_to_date = is_database_up_to_date(db)
+        except Exception:
+            # If we can't tell, don't take down the whole app over it.
+            logger.exception("Unable to check migration status")
+            return None
+
+        return None if self._up_to_date else self._pending_response()
+
+    @staticmethod
+    def _pending_response():
+        return (
+            render_template(
+                "error.html",
+                error_message=(
+                    "This Redash instance's database schema is out of date. "
+                    "An administrator needs to run the pending migrations "
+                    "(e.g. `manage.py db upgrade`) before it can be used."
+                ),
+            ),
+            503,
+        )
+
+
+pending_migration_check = PendingMigrationCheck()
