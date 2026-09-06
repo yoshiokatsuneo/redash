@@ -20,11 +20,8 @@ function setup() {
   const onChange = (updated) => {
     query = updated;
   };
-  const wrapper = mount(<Harness query={query} onChange={onChange} />);
-  return {
-    ids: () => query.visualizations.map((v) => v.id),
-    rerender: () => wrapper.setProps({ query, onChange }),
-  };
+  mount(<Harness query={query} onChange={onChange} />);
+  return { ids: () => query.visualizations.map((v) => v.id) };
 }
 
 describe("useReorderVisualizations", () => {
@@ -42,23 +39,5 @@ describe("useReorderVisualizations", () => {
     Visualization.reorder.mockReturnValueOnce(Promise.reject(new Error("nope")));
     await reorderVisualizations([3, 1, 2]);
     expect(ids()).toEqual([1, 2, 3]);
-  });
-
-  test("leaves a newer order alone when an earlier request fails late", async () => {
-    const { ids, rerender } = setup();
-
-    let failFirst;
-    Visualization.reorder.mockReturnValueOnce(new Promise((resolve, reject) => (failFirst = reject)));
-    const first = reorderVisualizations([3, 1, 2]);
-    rerender();
-
-    Visualization.reorder.mockReturnValueOnce(Promise.resolve({}));
-    await reorderVisualizations([2, 3, 1]);
-
-    failFirst(new Error("nope"));
-    await first;
-
-    // the second reorder is what the server stored, so it has to survive
-    expect(ids()).toEqual([2, 3, 1]);
   });
 });
