@@ -95,7 +95,7 @@ class PendingMigrationCheck:
                 error_message=(
                     "This Redash instance's database schema is out of date. "
                     "An administrator needs to run the pending migrations "
-                    "(e.g. `manage.py db upgrade`) before it can be used."
+                    "(e.g. `docker-compose run --rm server manage db upgrade`) before it can be used."
                 ),
             ),
             503,
