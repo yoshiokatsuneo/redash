@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import cx from "classnames";
-import { find, indexOf, map, orderBy } from "lodash";
+import { find, orderBy } from "lodash";
 import useMedia from "use-media";
 import Tabs from "antd/lib/tabs";
 import Button from "antd/lib/button";
@@ -133,7 +133,7 @@ export default function QueryVisualizationTabs({
       if (oldIndex === newIndex) {
         return;
       }
-      const visualizationIds = map(orderedVisualizations, (visualization) => visualization.id);
+      const visualizationIds = orderedVisualizations.map((visualization) => visualization.id);
       visualizationIds.splice(newIndex, 0, visualizationIds.splice(oldIndex, 1)[0]);
       onReorderVisualizations(visualizationIds);
     },
@@ -143,7 +143,7 @@ export default function QueryVisualizationTabs({
   if (canReorderTabs) {
     // `renderTabBar` lets us wrap every tab of the default tab bar into a sortable element,
     // so tabs can be dragged horizontally to change their order.
-    const tabKeys = map(orderedVisualizations, (visualization) => `${visualization.id}`);
+    const tabKeys = orderedVisualizations.map((visualization) => `${visualization.id}`);
     tabsProps.renderTabBar = (tabBarProps, DefaultTabBar) => (
       <SortableContainerWrapper
         axis="x"
@@ -154,7 +154,7 @@ export default function QueryVisualizationTabs({
       >
         <DefaultTabBar {...tabBarProps}>
           {(node) => (
-            <SortableElement key={node.key} index={indexOf(tabKeys, node.key)}>
+            <SortableElement key={node.key} index={tabKeys.indexOf(node.key)}>
               {node}
             </SortableElement>
           )}
