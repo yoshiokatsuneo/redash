@@ -75,7 +75,7 @@ class QueryVisualizationsReorderResource(BaseResource):
         query = get_object_or_404(models.Query.get_by_id_and_org, query_id, self.current_org)
         require_object_modify_permission(query, self.current_user)
 
-        payload = request.get_json(force=True, silent=True)
+        payload = request.get_json(force=True)
         ids = payload.get("ids") if isinstance(payload, dict) else None
         if not isinstance(ids, list) or any(isinstance(visualization_id, (list, dict)) for visualization_id in ids):
             abort(400, message="Expected a JSON object with 'ids' set to a list of visualization ids.")
