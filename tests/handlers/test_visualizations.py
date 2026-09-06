@@ -22,8 +22,8 @@ class VisualizationResourceTest(BaseTestCase):
 
     def test_new_visualization_is_appended_after_the_existing_ones(self):
         query = self.factory.create_query()
-        first = self.factory.create_visualization(query_rel=query, order=0)
-        second = self.factory.create_visualization(query_rel=query, order=1)
+        first = self.factory.create_visualization(query_rel=query, position=0)
+        second = self.factory.create_visualization(query_rel=query, position=1)
         models.db.session.commit()
 
         rv = self.make_request(
@@ -39,8 +39,8 @@ class VisualizationResourceTest(BaseTestCase):
         )
 
         self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.json["order"], 2)
-        self.assertEqual([first.order, second.order], [0, 1])
+        self.assertEqual(rv.json["position"], 2)
+        self.assertEqual([first.position, second.position], [0, 1])
 
     def test_delete_visualization(self):
         visualization = self.factory.create_visualization()
@@ -179,7 +179,8 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
     def create_query_with_visualizations(self, count=3, **kwargs):
         query = self.factory.create_query(**kwargs)
         visualizations = [
-            self.factory.create_visualization(query_rel=query, name="Vis {}".format(i), order=i) for i in range(count)
+            self.factory.create_visualization(query_rel=query, name="Vis {}".format(i), position=i)
+            for i in range(count)
         ]
         models.db.session.commit()
         return query, visualizations
@@ -196,8 +197,10 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
 
         self.assertEqual(rv.status_code, 200)
         self.assertEqual([vis["id"] for vis in rv.json], reordered_ids)
-        self.assertEqual([vis["order"] for vis in rv.json], [0, 1, 2])
-        self.assertEqual([visualizations[2].order, visualizations[0].order, visualizations[1].order], [0, 1, 2])
+        self.assertEqual([vis["position"] for vis in rv.json], [0, 1, 2])
+        self.assertEqual(
+            [visualizations[2].position, visualizations[0].position, visualizations[1].position], [0, 1, 2]
+        )
 
     def test_reordered_query_returns_visualizations_in_the_new_order(self):
         query, visualizations = self.create_query_with_visualizations()
@@ -223,7 +226,7 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
         )
 
         self.assertEqual(rv.status_code, 400)
-        self.assertEqual([vis.order for vis in visualizations], [0, 1, 2])
+        self.assertEqual([vis.position for vis in visualizations], [0, 1, 2])
 
     def test_rejects_duplicated_ids(self):
         query, visualizations = self.create_query_with_visualizations()
@@ -235,7 +238,7 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
         )
 
         self.assertEqual(rv.status_code, 400)
-        self.assertEqual([vis.order for vis in visualizations], [0, 1, 2])
+        self.assertEqual([vis.position for vis in visualizations], [0, 1, 2])
 
     def test_rejects_a_visualization_of_another_query(self):
         query, visualizations = self.create_query_with_visualizations()
@@ -249,7 +252,7 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
         )
 
         self.assertEqual(rv.status_code, 400)
-        self.assertEqual([vis.order for vis in visualizations], [0, 1, 2])
+        self.assertEqual([vis.position for vis in visualizations], [0, 1, 2])
 
     def test_rejects_ids_that_are_not_a_list(self):
         query, visualizations = self.create_query_with_visualizations()

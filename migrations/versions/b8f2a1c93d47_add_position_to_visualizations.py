@@ -1,4 +1,4 @@
-"""add order to visualizations
+"""add position to visualizations
 
 Revision ID: b8f2a1c93d47
 Revises: db0aca1ebd32
@@ -18,9 +18,9 @@ depends_on = None
 def upgrade():
     op.add_column(
         "visualizations",
-        sa.Column("order", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("position", sa.Integer(), nullable=False, server_default="0"),
     )
 
 
 def downgrade():
-    op.drop_column("visualizations", "order")
+    op.drop_column("visualizations", "position")

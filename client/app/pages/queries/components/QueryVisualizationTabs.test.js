@@ -18,9 +18,9 @@ window.matchMedia = (query) => ({
 });
 
 const visualizations = [
-  { id: 1, name: "Table", type: "TABLE", order: 2, options: {} },
-  { id: 2, name: "Chart", type: "CHART", order: 0, options: {} },
-  { id: 3, name: "Cohort", type: "COHORT", order: 1, options: {} },
+  { id: 1, name: "Table", type: "TABLE", position: 2, options: {} },
+  { id: 2, name: "Chart", type: "CHART", position: 0, options: {} },
+  { id: 3, name: "Cohort", type: "COHORT", position: 1, options: {} },
 ];
 
 function mountTabs(props = {}) {
@@ -34,17 +34,17 @@ function mountTabs(props = {}) {
 }
 
 describe("QueryVisualizationTabs", () => {
-  test("renders tabs ordered by their order field, falling back to id", () => {
+  test("renders tabs ordered by their position field, falling back to id", () => {
     const wrapper = mountTabs();
     expect(wrapper.find(".ant-tabs-tab").map((node) => node.text().trim())).toEqual(["Chart", "Cohort", "Table"]);
   });
 
-  test("orders by id when every visualization shares the same order", () => {
+  test("orders by id when every visualization shares the same position", () => {
     const wrapper = mountTabs({
       visualizations: [
-        { id: 3, name: "Third", type: "CHART", order: 0, options: {} },
-        { id: 1, name: "First", type: "TABLE", order: 0, options: {} },
-        { id: 2, name: "Second", type: "CHART", order: 0, options: {} },
+        { id: 3, name: "Third", type: "CHART", position: 0, options: {} },
+        { id: 1, name: "First", type: "TABLE", position: 0, options: {} },
+        { id: 2, name: "Second", type: "CHART", position: 0, options: {} },
       ],
     });
     expect(wrapper.find(".ant-tabs-tab").map((node) => node.text().trim())).toEqual(["First", "Second", "Third"]);

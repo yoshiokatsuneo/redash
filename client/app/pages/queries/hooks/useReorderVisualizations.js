@@ -10,8 +10,8 @@ export default function useReorderVisualizations(query, onChange) {
   return useCallback(
     (orderedVisualizationIds) => {
       const previousVisualizations = query.visualizations;
-      const reorderedVisualizations = map(orderedVisualizationIds, (visualizationId, order) =>
-        extend({}, find(previousVisualizations, { id: visualizationId }), { order })
+      const reorderedVisualizations = map(orderedVisualizationIds, (visualizationId, position) =>
+        extend({}, find(previousVisualizations, { id: visualizationId }), { position })
       );
 
       // Move the tabs right away, and roll back if the server rejects the new order.

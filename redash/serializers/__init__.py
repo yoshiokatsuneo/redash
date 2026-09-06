@@ -157,7 +157,7 @@ def serialize_visualization(object, with_query=True):
         "name": object.name,
         "description": object.description,
         "options": object.options,
-        "order": object.order,
+        "position": object.position,
         "updated_at": object.updated_at,
         "created_at": object.created_at,
     }

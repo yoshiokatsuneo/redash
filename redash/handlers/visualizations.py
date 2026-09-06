@@ -10,10 +10,10 @@ from redash.permissions import (
 from redash.serializers import serialize_visualization
 
 
-def next_visualization_order(query):
-    """Order value that puts a new visualization after the existing ones."""
-    orders = [vis.order for vis in query.visualizations]
-    return max(orders) + 1 if orders else 0
+def next_visualization_position(query):
+    """Position that puts a new visualization after the existing ones."""
+    positions = [vis.position for vis in query.visualizations]
+    return max(positions) + 1 if positions else 0
 
 
 class VisualizationListResource(BaseResource):
@@ -25,7 +25,7 @@ class VisualizationListResource(BaseResource):
         require_object_modify_permission(query, self.current_user)
 
         kwargs["query_rel"] = query
-        kwargs.setdefault("order", next_visualization_order(query))
+        kwargs.setdefault("position", next_visualization_position(query))
 
         vis = models.Visualization(**kwargs)
         models.db.session.add(vis)
@@ -86,8 +86,8 @@ class QueryVisualizationsReorderResource(BaseResource):
                 message="'ids' must contain every visualization of the query exactly once.",
             )
 
-        for order, visualization_id in enumerate(ids):
-            visualizations[visualization_id].order = order
+        for position, visualization_id in enumerate(ids):
+            visualizations[visualization_id].position = position
 
         models.db.session.commit()
 

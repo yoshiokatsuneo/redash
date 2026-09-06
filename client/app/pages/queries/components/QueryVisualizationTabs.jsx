@@ -122,7 +122,7 @@ export default function QueryVisualizationTabs({
     );
   }
 
-  const orderedVisualizations = useMemo(() => orderBy(visualizations, ["order", "id"]), [visualizations]);
+  const orderedVisualizations = useMemo(() => orderBy(visualizations, ["position", "id"]), [visualizations]);
   const isFirstVisualization = useCallback((visId) => visId === orderedVisualizations[0].id, [orderedVisualizations]);
   const isMobile = useMedia({ maxWidth: 768 });
 
