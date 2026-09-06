@@ -42,6 +42,28 @@ class VisualizationResourceTest(BaseTestCase):
         self.assertEqual(rv.json["position"], 2)
         self.assertEqual([first.position, second.position], [0, 1])
 
+    def test_ignores_a_client_supplied_position(self):
+        query = self.factory.create_query()
+        self.factory.create_visualization(query_rel=query, position=0)
+        self.factory.create_visualization(query_rel=query, position=1)
+        models.db.session.commit()
+
+        rv = self.make_request(
+            "post",
+            "/api/visualizations",
+            data={
+                "query_id": query.id,
+                "name": "Chart",
+                "description": "",
+                "options": {},
+                "type": "CHART",
+                "position": -5,
+            },
+        )
+
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.json["position"], 2)
+
     def test_delete_visualization(self):
         visualization = self.factory.create_visualization()
         models.db.session.commit()
@@ -252,6 +274,16 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
         )
 
         self.assertEqual(rv.status_code, 400)
+        self.assertEqual([vis.position for vis in visualizations], [0, 1, 2])
+
+    def test_rejects_a_payload_that_is_not_an_object(self):
+        query, visualizations = self.create_query_with_visualizations()
+        path = "/api/queries/{}/visualizations/reorder".format(query.id)
+
+        for payload in ([visualizations[0].id], "ids", 42):
+            rv = self.make_request("post", path, data=payload)
+            self.assertEqual(rv.status_code, 400)
+
         self.assertEqual([vis.position for vis in visualizations], [0, 1, 2])
 
     def test_rejects_ids_that_are_not_a_list(self):

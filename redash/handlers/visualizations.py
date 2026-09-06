@@ -25,7 +25,9 @@ class VisualizationListResource(BaseResource):
         require_object_modify_permission(query, self.current_user)
 
         kwargs["query_rel"] = query
-        kwargs.setdefault("position", next_visualization_position(query))
+        # Set server-side rather than defaulted, so a caller cannot place a new
+        # visualization anywhere but after the existing ones.
+        kwargs["position"] = next_visualization_position(query)
 
         vis = models.Visualization(**kwargs)
         models.db.session.add(vis)
@@ -75,9 +77,10 @@ class QueryVisualizationsReorderResource(BaseResource):
         query = get_object_or_404(models.Query.get_by_id_and_org, query_id, self.current_org)
         require_object_modify_permission(query, self.current_user)
 
-        ids = request.get_json(force=True).get("ids")
+        payload = request.get_json(force=True, silent=True)
+        ids = payload.get("ids") if isinstance(payload, dict) else None
         if not isinstance(ids, list) or any(isinstance(visualization_id, (list, dict)) for visualization_id in ids):
-            abort(400, message="Expected 'ids' to be a list of visualization ids.")
+            abort(400, message="Expected a JSON object with 'ids' set to a list of visualization ids.")
 
         visualizations = {vis.id: vis for vis in query.visualizations}
         if len(ids) != len(visualizations) or set(ids) != set(visualizations):
