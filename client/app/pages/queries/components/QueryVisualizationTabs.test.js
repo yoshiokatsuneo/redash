@@ -5,7 +5,7 @@ import QueryVisualizationTabs from "./QueryVisualizationTabs";
 
 jest.mock("@/components/visualizations/VisualizationRenderer", () => () => null);
 
-// jsdom has no matchMedia, which `use-media` needs to tell desktop from mobile.
+// jsdom has no matchMedia, which the `use-media` npm package needs to tell desktop from mobile.
 window.matchMedia = (query) => ({
   media: query,
   matches: false,
