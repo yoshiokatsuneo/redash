@@ -25,8 +25,6 @@ class VisualizationListResource(BaseResource):
         require_object_modify_permission(query, self.current_user)
 
         kwargs["query_rel"] = query
-        # Set server-side rather than defaulted, so a caller cannot place a new
-        # visualization anywhere but after the existing ones.
         kwargs["position"] = next_visualization_position(query)
 
         vis = models.Visualization(**kwargs)
