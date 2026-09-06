@@ -64,6 +64,21 @@ class VisualizationResourceTest(BaseTestCase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.json["position"], 2)
 
+    def test_update_ignores_a_client_supplied_position(self):
+        query = self.factory.create_query()
+        visualization = self.factory.create_visualization(query_rel=query, position=7)
+        models.db.session.commit()
+
+        rv = self.make_request(
+            "post",
+            "/api/visualizations/{}".format(visualization.id),
+            data={"name": "Renamed", "position": -99},
+        )
+
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.json["name"], "Renamed")
+        self.assertEqual(rv.json["position"], 7)
+
     def test_delete_visualization(self):
         visualization = self.factory.create_visualization()
         models.db.session.commit()
@@ -332,6 +347,14 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
 
         rv = self.make_request("post", path, user=other_user, data=data)
         self.assertEqual(rv.status_code, 403)
+
+        self.make_request(
+            "post",
+            "/api/queries/{}/acl".format(query.id),
+            data={"access_type": "modify", "user_id": other_user.id},
+        )
+        rv = self.make_request("post", path, user=other_user, data=data)
+        self.assertEqual(rv.status_code, 200)
 
         rv = self.make_request("post", path, user=admin_from_diff_org, data=data)
         self.assertEqual(rv.status_code, 404)

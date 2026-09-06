@@ -43,6 +43,9 @@ class VisualizationResource(BaseResource):
 
         kwargs.pop("id", None)
         kwargs.pop("query_id", None)
+        # Only the reorder endpoint may move a visualization, so that positions stay
+        # a permutation the whole query agrees on.
+        kwargs.pop("position", None)
 
         self.update_model(vis, kwargs)
         d = serialize_visualization(vis, with_query=False)
