@@ -78,9 +78,14 @@ class QueryVisualizationsReorderResource(BaseResource):
         query = get_object_or_404(models.Query.get_by_id_and_org, query_id, self.current_org)
         require_object_modify_permission(query, self.current_user)
 
+        def is_valid_id(visualization_id):
+            # isinstance(visualization_id, int) alone would also accept bool, since
+            # bool is a subclass of int in Python.
+            return isinstance(visualization_id, int) and not isinstance(visualization_id, bool)
+
         payload = request.get_json(force=True)
         ids = payload.get("ids") if isinstance(payload, dict) else None
-        if not isinstance(ids, list) or any(type(visualization_id) is not int for visualization_id in ids):
+        if not isinstance(ids, list) or any(not is_valid_id(visualization_id) for visualization_id in ids):
             abort(400, message="Expected a JSON object with 'ids' set to a list of visualization ids.")
 
         visualizations = {vis.id: vis for vis in query.visualizations}
