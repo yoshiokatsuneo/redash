@@ -2,6 +2,7 @@ import React from "react";
 import { mount } from "enzyme";
 import { Query } from "@/services/query";
 import Visualization from "@/services/visualization";
+import notification from "@/services/notification";
 import useReorderVisualizations from "./useReorderVisualizations";
 
 jest.mock("@/services/visualization", () => ({ reorder: jest.fn() }));
@@ -25,13 +26,17 @@ function setup() {
 }
 
 describe("useReorderVisualizations", () => {
-  beforeEach(() => Visualization.reorder.mockReset());
+  beforeEach(() => {
+    Visualization.reorder.mockReset();
+    notification.error.mockReset();
+  });
 
   test("moves the tabs before the request resolves", () => {
     const { ids } = setup();
     Visualization.reorder.mockReturnValueOnce(new Promise(() => {}));
     reorderVisualizations([3, 1, 2]);
     expect(ids()).toEqual([3, 1, 2]);
+    expect(Visualization.reorder).toHaveBeenCalledWith({ queryId: 1, ids: [3, 1, 2] });
   });
 
   test("rolls back when its own request fails", async () => {
@@ -39,5 +44,6 @@ describe("useReorderVisualizations", () => {
     Visualization.reorder.mockReturnValueOnce(Promise.reject(new Error("nope")));
     await reorderVisualizations([3, 1, 2]);
     expect(ids()).toEqual([1, 2, 3]);
+    expect(notification.error).toHaveBeenCalled();
   });
 });
