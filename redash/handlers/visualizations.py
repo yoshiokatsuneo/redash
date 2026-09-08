@@ -80,7 +80,7 @@ class QueryVisualizationsReorderResource(BaseResource):
 
         payload = request.get_json(force=True)
         ids = payload.get("ids") if isinstance(payload, dict) else None
-        if not isinstance(ids, list) or any(isinstance(visualization_id, (list, dict)) for visualization_id in ids):
+        if not isinstance(ids, list) or any(type(visualization_id) is not int for visualization_id in ids):
             abort(400, message="Expected a JSON object with 'ids' set to a list of visualization ids.")
 
         visualizations = {vis.id: vis for vis in query.visualizations}

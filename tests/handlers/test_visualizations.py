@@ -323,6 +323,17 @@ class QueryVisualizationsReorderResourceTest(BaseTestCase):
 
         self.assertEqual(rv.status_code, 400)
 
+    def test_rejects_non_int_ids_even_when_numerically_equal(self):
+        query, visualizations = self.create_query_with_visualizations()
+
+        rv = self.make_request(
+            "post",
+            "/api/queries/{}/visualizations/reorder".format(query.id),
+            data={"ids": [visualizations[0].id, float(visualizations[1].id), visualizations[2].id]},
+        )
+
+        self.assertEqual(rv.status_code, 400)
+
     def test_returns_404_for_unknown_query(self):
         rv = self.make_request("post", "/api/queries/0/visualizations/reorder", data={"ids": []})
         self.assertEqual(rv.status_code, 404)
